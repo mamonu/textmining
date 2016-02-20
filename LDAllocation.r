@@ -14,17 +14,19 @@ Afile<-'holresid.csv'
 # load data into a matrix
 data <- read.csv(Afile, stringsAsFactors=FALSE)
 
-reviews <- data$description
-reviews <- gsub("'", "", reviews)  # remove apostrophes
-reviews <- gsub("[[:punct:]]", " ", reviews)  # replace punctuation with space
-reviews <- gsub("[[:cntrl:]]", " ", reviews)  # replace control characters with space
-#reviews <- gsub("^[[:space:]]+", "", reviews) # remove whitespace at beginning of documents
-#reviews <- gsub("[[:space:]]+$", "", reviews) # remove whitespace at end of documents
-reviews <- tolower(reviews)  #
+desc <- data$description
+desc <- gsub("'", "", desc)  # remove apostrophes
+desc <- gsub("[[:punct:]]", " ", desc)  # replace punctuation with space
+desc <- gsub("[[:cntrl:]]", " ", desc)  # replace control characters with space
+desc <- gsub("[[:digit:]]+", "", desc) # remove numbers
+
+#desc <- gsub("^[[:space:]]+", "", desc) # remove whitespace at beginning of documents
+#desc <- gsub("[[:space:]]+$", "", desc) # remove whitespace at end of documents
+desc <- tolower(desc)  #
 
 
 
-doc.list <- strsplit(reviews, "[[:space:]]+")
+doc.list <- strsplit(desc, "[[:space:]]+")
 
 # compute the table of terms:
 term.table <- table(unlist(doc.list))
@@ -53,7 +55,7 @@ term.frequency <- as.integer(term.table)
 
 
 # MCMC and model tuning parameters:
-K <- 20
+K <- 3
 G <- 5000
 alpha <- 0.02
 eta <- 0.02
@@ -66,29 +68,37 @@ fit <- lda.collapsed.gibbs.sampler(documents = documents, K = K, vocab = vocab,
                                    num.iterations = G, alpha = alpha, 
                                    eta = eta, initial = NULL, burnin = 0,
                                    compute.log.likelihood = TRUE)
+
+
+# fit <-  slda.em(documents, K, vocab, num.e.iterations, num.m.iterations, alpha,
+#         eta, annotations, params, variance, logistic = FALSE, lambda = 10,
+#         regularise = FALSE, method = "sLDA", trace = 0L, MaxNWts=3000)
+
+
 t2 <- Sys.time()
 t2 - t1  # about 24 minutes on laptop
 
 
 
+theta <- t(apply(fit$document_sums + alpha, 2, function(x) x/sum(x)))
+phi <- t(apply(t(fit$topics) + eta, 2, function(x) x/sum(x)))
 
-# dtm <- create_matrix(as.vector(reviews), 
-#                         language="english", removeNumbers=TRUE, stemWords=TRUE,
-#                         minWordLength = 3, 
-#                         removePunctuation = TRUE,
-#                         weighting=weightTf)
-# 
-# term_tfidf <- tapply(dtm$v/row_sums(dtm)[dtm$i], dtm$j, mean) * 
-#   log2(nDocs(dtm)/col_sums(dtm > 0))
-# dtm <- dtm[ , term_tfidf >= 0.1]
-# dtm <- dtm[row_sums(dtm) > 0, ]
-# 
-# 
-# lda <- LDA(dtm, 3)
-# 
-# terms(lda,30)
-# 
-# topics(lda)
+lda_description <- list(phi = phi,
+                     theta = theta,
+                     doc.length = doc.length,
+                     vocab = vocab,
+                     term.frequency = term.frequency)
+
+
+json <- createJSON(phi = lda_description$phi, 
+                   theta = lda_description$theta, 
+                   doc.length = lda_description$doc.length, 
+                   vocab = lda_description$vocab, 
+                   term.frequency = lda_description$term.frequency)
+
+
+serVis(json, out.dir = 'vis', open.browser = TRUE)
+
 
 
 
