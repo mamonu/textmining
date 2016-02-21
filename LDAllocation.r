@@ -76,7 +76,7 @@ fit <- lda.collapsed.gibbs.sampler(documents = documents, K = K, vocab = vocab,
 
 
 t2 <- Sys.time()
-t2 - t1  # about 24 minutes on laptop
+t2 - t1  # about 2 minutes on laptop
 
 
 
