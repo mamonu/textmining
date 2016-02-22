@@ -9,6 +9,9 @@ library(lda)
 library(RJSONIO)
 
 
+
+#clean up the r environment.
+rm(list = ls())
 #@home working directory
 #setwd("/Users/thorosm2002/Dropbox/Rcode/LDA")
 
