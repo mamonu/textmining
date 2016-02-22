@@ -6,22 +6,29 @@ library(stringi)
 library(LDAvis)
 library(slam)
 library(lda)
+library(RJSONIO)
 
 
+#@home working directory
+#setwd("/Users/thorosm2002/Dropbox/Rcode/LDA")
 
-setwd("/Users/thorosm2002/Dropbox/Rcode/LDA")
-Afile<-'holresid.csv'
+
+#@work working directory
+setwd("/home/bigdata/LDA/textmining/")
+
+#Afile<-'holresid.csv'
+Afile<-'caravanelse.csv'
 # load data into a matrix
 data <- read.csv(Afile, stringsAsFactors=FALSE)
 
 desc <- data$description
 desc <- gsub("'", "", desc)  # remove apostrophes
-desc <- gsub("[[:punct:]]", " ", desc)  # replace punctuation with space
-desc <- gsub("[[:cntrl:]]", " ", desc)  # replace control characters with space
+desc <- gsub("[[:punct:]]", "", desc)  # replace punctuation with space
+desc <- gsub("[[:cntrl:]]", "", desc)  # replace control characters with space
 desc <- gsub("[[:digit:]]+", "", desc) # remove numbers
 
-#desc <- gsub("^[[:space:]]+", "", desc) # remove whitespace at beginning of documents
-#desc <- gsub("[[:space:]]+$", "", desc) # remove whitespace at end of documents
+desc <- gsub("^[[:space:]]+", "", desc) # remove whitespace at beginning of documents
+esc <- gsub("[[:space:]]+$", "", desc) # remove whitespace at end of documents
 desc <- tolower(desc)  #
 
 
@@ -70,13 +77,28 @@ fit <- lda.collapsed.gibbs.sampler(documents = documents, K = K, vocab = vocab,
                                    compute.log.likelihood = TRUE)
 
 
+
+#fit <- mmsb.collapsed.gibbs.sampler(network, K, num.iterations, alpha,
+ #                            beta.prior, initial = NULL, burnin = NULL, trace = 0L)
+
+#lda.cvb0(documents, K, vocab, num.iterations, alpha, eta, trace = 0L)
+
+
+
 # fit <-  slda.em(documents, K, vocab, num.e.iterations, num.m.iterations, alpha,
 #         eta, annotations, params, variance, logistic = FALSE, lambda = 10,
 #         regularise = FALSE, method = "sLDA", trace = 0L, MaxNWts=3000)
 
 
 t2 <- Sys.time()
-t2 - t1  # about 2 minutes on laptop
+t2 - t1  
+
+# about 2 minutes on laptop
+# 1.5 hours for the big file.
+
+
+#to access a vocab word : lda_description$vocab[1233] 
+#to access a vocab word frequency : lda_description$term.frequency[1233]
 
 
 
@@ -97,7 +119,11 @@ json <- createJSON(phi = lda_description$phi,
                    term.frequency = lda_description$term.frequency)
 
 
-serVis(json, out.dir = 'vis', open.browser = TRUE)
+
+#export the json file! 
+write(json, "exported.json")
+
+serVis(json, out.dir = 'vis2', open.browser = TRUE)
 
 
 
